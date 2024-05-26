@@ -1,0 +1,245 @@
+CCSD3ZF0000100000001NJPL3IF0PDS200000001 = SFDU_LABEL
+RECORD_TYPE          = STREAM
+OBJECT               = TEXT
+  NOTE               = "Description of IBM PC software provided with the
+                        Voyager CD-ROM set."
+END_OBJECT
+END
+
+                    -----------------------------
+                    IBM PC Decompression Software
+                    -----------------------------
+
+IBM PC software modules are supplied in the PC subdirectory as:
+
+            1. Stand-alone application PCDCOMP
+            2. C-language source code for program VDCOMP
+            3. C-language source code for DECOMP subroutines
+            4. C-language source code for program DETEST
+            5. FORTRAN-language source code for subroutine BTEST
+            6. FORTRAN-language source code for DECOMP subroutines
+            7. FORTRAN-language source code for program DETEST
+            8. FORTRAN-language source code for program PCDRIV
+            9. FORTRAN-language source code for program IMGINDEX
+
+These modules are described in detail in the following sections.
+
+Stand-alone Executable PCDCOMP
+------------------------------
+The program PCDCOMP creates decompressed image files and is supplied as
+an executable in the PCDCOMP.EXE file.  The output files will contain
+fixed-length records in one of four formats (see below).  The image
+histogram and all engineering parameters are discarded when writing
+the FITS, VICAR and unlabelled formats.
+
+The output formats supported all have fixed-length records:
+
+     FORMAT                           RESULTING FILE
+     --------------------------------------------------
+     SFDU/PDS                         836-byte records
+     FITS                             2880-byte records
+     VICAR                            800-byte records
+     unlabelled raster                800-byte records
+
+
+C-language Program VDCOMP
+-------------------------
+The program VDCOMP is a C-language image decompression program that
+includes all routines necessary to produce an executable version of
+the program.  It is supplied as source code in the VDCOMP.C file.
+VDCOMP prompts the user for a input file name, output file format
+choice, and output file name.  The output file formats supported by
+VDCOMP are identical to those of PCDCOMP above.
+
+The following commands should be used to link subroutines and produce
+an executable file, using Microsoft C Version 5.x.
+
+      cl /c VDCOMP.c
+      link  VDCOMP/stack:10000;
+
+ Use the following command to run the program:
+
+      VDCOMP [infile] [outfile] [output format]
+
+         infile        - name of compressed image file.
+         outfile       - name of uncompressed output file.
+         output format - selected from the following list:
+
+            1  SFDU/PDS format [DEFAULT].
+            2  FITS format.
+            3  VICAR format.
+            4  Unlabelled binary array.
+
+
+C-language DECOMP Subroutines
+-----------------------------
+For those who want to write their own C-language programs, decompression
+subroutines are provided in the DECOMP.C file.  This file contains the
+subroutines:
+
+                decmpinit     decompress
+                dcmprs        huff_tree      sort_freq
+
+See the example C-language program below for subroutine usage.
+
+
+C-language Program DETEST
+-------------------------
+DETEST is a main program, located in the DETEST.C file, which tests the
+performance of the decompression software.  Anyone adapting the software
+to their particular hardware and operating system environment will need
+this program for testing the software.
+
+
+FORTRAN-language Program DETEST
+-------------------------------
+DETEST.FOR is the FORTRAN version of the above program.
+
+
+FORTRAN-language DECOMP Subroutines
+----------------------------------
+The FORTRAN versions of the decompression subroutines reside in the
+DECOMP.FOR file. This file contains the subroutines:
+
+               DECMPINIT      DECOMPRESS
+               DCMPRS         HUFF_TREE      SORT_FREQ
+
+See the example FORTRAN program below for subroutine usage.
+
+
+FORTRAN-language Subroutine BTEST
+---------------------------------
+BTEST.FOR contains a FORTRAN version of the VAX/VMS BTEST intrinsic
+function. Use this routine only if you are not running under the
+VAX/VMS environment.
+
+
+FORTRAN-language Program PCDRIV
+-------------------------------
+PCDRIV.FOR is a program to decompress image files and write them
+out to a PDS-formatted file.  The program needs to be compiled,
+then linked with the DECOMP object file to produce an executable file.
+
+ Using Microsoft FORTRAN Version 4.1:
+
+    fl pcdriv.for decomp.for
+
+
+FORTRAN-language Program IMGINDEX
+--------------------------------
+IMGINDEX.FOR will read and display the contents of the Image Index Table
+(IMGINDEX.TAB).  The Image Index Table must be in the same directory as
+the executable for the program to operate properly.  The FILE='IMGINDEX.TAB'
+statement in the OPEN call can be edited to reflect the location of the
+table (for example, on an IBM PC it might be specified as
+FILE='L:\INDEX\IMGINDEX.TAB').
+
+
+Example C-language Program
+--------------------------
+
+This example program demonstrates the use of the decompression
+subroutines.
+
+  /********************************************************************
+  *
+  * hist   - Buffer to contain 511 elements of the encoding histogram.
+  *          The encoding histogram is extracted from the image area.
+  * nsi    - Number of bytes obtained from the read of a compressed
+  *          line.
+  * nso    - Number of output samples after decompression. For Voyager
+  *          images, this value is 836.
+  * linei  - Buffer containing the input compressed line.
+  * lineo  - Buffer to contain the restored line after decompression.
+  * nl     - Number of lines in the image array.  For Voyager images,
+  *          this value is 800.
+  * il     - Loop counter for processing image lines.
+  ******************************************************************/
+         main ()
+         {
+          extern void decmpinit(); /* decmpinit is void function*/
+          extern void decompress();/* decompress is void function*/
+          long  nsi,nso,nl,il;
+          long  hist[511];
+          char  linei[836],lineo[836];
+          .
+          .
+  /********************************************************************
+  * Assume the encoding histogram has been extracted from
+  * the image file and has been placed into the hist array.
+  * Pass it to the decmpinit routine for initialization
+  ********************************************************************/
+          decmpinit(hist);
+          .
+          .
+  /********************************************************************
+  * The loop will read one compressed line at a time from the input
+  * file and call the decompress routine to restore the line
+  ********************************************************************/
+          nl  = 800;
+          nso = 836;
+          for (il=0; i<nl; ++i)
+          {
+           .
+           .
+           (read next compressed line (linei) and length of line (nsi))
+           decompress(linei,lineo,&nsi,&nso);
+           (line is restored in the LINEO variable.)
+           .
+          }
+          .
+          .
+         }
+
+
+Example FORTRAN Program
+-----------------------
+This example FORTRAN program demonstrates how to use the decompression
+subroutines.
+
+
+  C*******************************************************************
+  C
+  C HIST   - Buffer to contain 511 elements of the encoding histogram.
+  C          The encoding histogram is extracted from the image file.
+  C NSI    - Number of bytes obtained from the read of a compressed
+  C          line.
+  C NSO    - Number of output samples after decompression. For Voyager
+  C          images, this value is 836.
+  C LINEI  - Buffer containing the input compressed line.
+  C LINEO  - Buffer to contain the restored line after decompression.
+  C NL     - Number of lines in the image array.  For Voyager images,
+  C          this value is 800
+  C IL     - DO loop counter for processing image lines.
+  C********************************************************************
+          INTEGER*4 NSI,NSO,NL,IL
+          INTEGER*4 HIST(511)
+          BYTE      LINEI(836),LINEO(836)
+          .
+          .
+  C********************************************************************
+  C Assume the encoding histogram has been extracted from
+  C the image file and has been placed into the HIST array.
+  C Pass it to the DECMPINIT routine for initialization
+  C********************************************************************
+          CALL DECMPINIT(HIST)
+          .
+          .
+  C********************************************************************
+  C The DO loop will read one compressed line at a time from the input
+  C file and call the DECOMPRESS routine to restore the line
+  C********************************************************************
+          NL  = 800
+          NSO = 836
+          DO IL = 1,NL
+          .
+          .
+          (read next compressed line (LINEI) and length of line (NSI))
+          CALL DECOMPRESS(LINEI,LINEO,NSI,NSO)
+          (line is restored in the LINEO subroutine)
+          .
+          END DO
+          .
+          .
+          STOP
+          END
