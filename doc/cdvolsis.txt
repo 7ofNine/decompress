@@ -1,0 +1,725 @@
+PDS_VERSION_ID                = PDS3
+RECORD_TYPE                   = STREAM
+OBJECT                        = TEXT
+  PUBLICATION_DATE            = 1997-06-27
+  NOTE                        = "VL1/VL2-M-LCS-2-EDR-V1.0
+     Software Interface Specification"
+END_OBJECT                    = TEXT
+END
+
+
+    VL1/VL2-M-LCS-2-EDR-V1.0 Software Interface Specification
+VL1/VL2 Mars Viking Lander Camera System Experiment Data Record V
+                               1.0
+
+      Edward A. Guinness, Thomas C. Stein, Jennifer Herron
+                                
+                                
+           Department of Earth and Planetary Sciences
+                      Washington University
+                    St. Louis, Missouri 63130
+                                
+
+                           Version 1.0
+                          June 27, 1997
+
+
+1.  GENERAL DESCRIPTION
+
+1.1.  Overview
+
+     This Software Interface Specification (SIS) document
+contains the description of the CD-ROM archive for the Viking
+Lander 1 and 2 Imaging Experiment Data Record (EDR) data set.
+
+
+1.2.  Scope
+
+     The format and content specifications in this SIS apply to
+the Viking Lander Imaging EDR archive as stored on CD-ROM and
+produced by the Planetary Data System's Geosciences Node at
+Washington University.
+
+
+1.3.  Applicable Documents
+
+International Standards Organization (ISO) document:
+
+[1]  ISO 9660-1988, Information Processing - Volume and File
+     Structure of CD-ROM for Information Exchange, April 15,
+     1988.
+
+Jet Propulsion Laboratory (JPL) documents:
+
+[2]  NASA Reference Publication 1007, Viking Lander Imaging
+     Investigation, Picture Catalog of Primary Mission Experiment
+     Data Record, Robert B. Tucker, February, 1978.
+
+[3]  NASA Reference Publication 1068, Viking Lander Imaging
+     Investigation During Extended and Continuation Automatic
+     Missions, Volume I - Lander 1 Picture Catalog of Experiment
+     Data Record, Kenneth L. Jones, Mary Henshaw, Christe
+     McMenomy, Andres Robles, Paul C. Scribner, Stephen D. Wall,
+     and Jackson W. Wilson, April, 1981.
+
+[4]  NASA Reference Publication 1068, Viking Lander Imaging
+     Investigation During Extended and Continuation Automatic
+     Missions, Volume II - Lander 2 Picture Catalog of Experiment
+     Data Record, Kenneth L. Jones, Mary Henshaw, Christe
+     McMenomy, Andres Robles, Paul C. Scribner, Stephen D. Wall,
+     and Jackson W. Wilson, April, 1981.
+
+[5]  NASA Reference Publication 1137, Conclusion of Viking Lander
+     Imaging Investigation, Picture Catalog of Experiment Data
+     Record, Stephen D. Wall and Teresa C. Ashmore, March, 1985.
+
+[6]  JPL D-7669, PDS Data Preparation Workbook, Version 3.1,
+     February 17, 1995.
+
+[7]  JPL D-7669, PDS Standards Reference, Version 3.2, July 24,
+     1995.
+
+[8]  JPL D-7116, Planetary Science Data Dictionary Document,
+     Revision D, July 15, 1996.
+
+
+1.4.  System Compatibility
+
+     The CD-ROM is readable on UNIX, PC, and Mac systems.
+
+
+2.  VOLUME
+
+2.1.  ISO 9660 Compatibility
+
+     Each volume is an ISO-9660 compliant CD-ROM and may be read
+on any standard CD-ROM player.  The CD-ROM volumes were created
+according to the ISO-9660 standards.  However, the CD-ROM does
+not contain any Extended Attribute Records (XAR).  As a result
+some VAX/VMS users may have problems accessing files on this
+system.
+
+
+2.2.  PDS Compatibility
+
+     The archive complies with the PDS procedures and standards
+outlined in references [6], [7], and [8].
+
+     Each Viking Lander EDR image product has an attached PDS
+label that describes the image.  Ancillary data files have
+detached PDS labels.
+
+
+2.3.  Data Sources
+
+     When Viking Lander images were transmitted to Earth, they
+were subjected to a number of programs that organized the data
+and merged multiple playbacks to minimize errors from data
+transmission.  Once the data were edited and converted to a VICAR
+format they were placed onto magnetic tape and distributed to
+Viking Lander Imaging team members.  The PDS-formatted images in
+this archive were created from files stored on the Imaging Team
+magnetic tapes at Washington University.
+
+
+2.4.  Data Validation
+
+     The digital images were visually compared to photographs in
+references [2], [3], [4], and [5].
+
+
+3.  VOLUME AND FILE ORGANIZATION
+
+3.1.  Directory Structure
+
+     The EDR image archive volume is an NFS-mountable volume
+containing the following directories:  CATALOG, DOCUMENT, INDEX,
+CALIB, GEOM, and BROWSE.  In addition, there are a series of
+image data directories.  The BROWSE directory contains several
+subdirectories.
+
+     The root directory contains the following files:
+
+AAREADME.TXT  -     Brief description of volume contents.
+AAREADME.HTM  -     HTML version of the AAREADME.TXT file.
+ERRATA.TXT    -     Description of comments and errors.
+VOLDESC.CAT   -     Volume object definition.
+
+     The CATALOG directory contains the following files:
+
+CATINFO.TXT   -     Description of files in the CATALOG
+                    directory.
+<files>.CAT   -     Files describing the Viking mission and spacecraft,
+                    Viking Lander camera, and the EDR image data set.
+
+     The DOCUMENT directory contains the following files:
+
+DOCINFO.TXT   -     Description of files in the DOCUMENT
+                    directory.
+CDVOLSIS.TXT  -     Software Interface Specification (SIS)
+                    document.  This file.
+CDVOLSIS.HTM  -     HTML version of this SIS document.
+VOLINFO.TXT   -     Overview of the Viking Lander mission, the
+                    Lander cameras, and the archive volume.
+VOLINFO.HTM   -     HTML version of the VOLINFO.TXT document.
+
+     The INDEX directory contains the following files:
+
+INDXINFO.TXT  -     Description of files in the INDEX directory.
+INDEX.TAB     -     Volume index in tabular format.
+INDEX.LBL     -     PDS label for the volume index (INDEX.TAB).
+CUMINDEX.TAB  -     Cumulative index in tabular format.
+CUMINDEX.LBL  -     PDS label for the cumulative index
+                    (CUMINDEX.TAB).
+
+     The CALIB directory contains the following files:
+
+CALINFO.TXT   -     Description of the radiometric calibration
+                    files and procedures.
+CALINFO.HTM   -     HTML version of the CALINFO.TXT file.
+<files>       -     Calibration data files and detached PDS label
+                    files.
+
+     The GEOM directory contains the following files:
+
+GEOMINFO.TXT  -     Description of the geometry calibration files
+                    and procedures.
+GEOMINFO.HTM  -     HTML version of GEOMINFO.TXT document.
+FIGUREx.GIF   -     Figures for GEOMINFO.TXT document in GIF
+                    format.
+
+     The BROWSE directory contains the following files:
+
+INDEX.HTM      -    Front page of the image browser.
+HTML           -    Directory with subdirectories for HTML pages.
+ nxxx          -    Directories with HTML pages for images in
+                    sequence nxxx.
+  lcnxxxfl.HTM -    HTML pages for browse image of lcnxxx.fil.
+                    (see naming conventions below)
+IMAGE          -    Directory with subdirectories for browse
+                    images.
+ nxxx          -    Directories with browse images in sequence
+                    nxxx.
+  lcnxxxfl.GIF -    Browse image for lcnxxx.fil.
+                    (see naming conventions below)
+nxxx.HTM       -    HTML page for directory nxxx.
+DD.HTM         -    HTML page for data dictionary used in
+                    browser.
+HELP.HTM       -    HTML page for browser help.
+<files>.GIF    -    Button icons used in browser.
+
+     The NXXX directories contain the individual archive image
+products.  An example directory is B0XX that stores images with a
+PRODUCT_ID in the range of B000 to B099:
+
+lcnxxx.fil     -    Each image product has a unique name as
+                    described below.
+
+l    -    Lander number, either 1 or 2.
+c    -    Camera number, either 1 or 2.
+n    -    Letter sequence from A through J for Lander 1, and from
+          A through I for Lander 2.
+xxx  -    Number sequence from 0 through 255.
+fil  -    Filter name abbreviation as listed below.
+
+RED  - Red filter.
+GRN  - Green filter.
+BLU  - Blue filter.
+IR3  - Near-infrared (~ 1.00 micrometers) filter.
+IR2  - Near-infrared (~ 0.95 micrometers) filter.
+IR1  - Near-infrared (~ 0.85 micrometers) filter.
+BB1  - High resolution broadband diode with focal length of 1.9
+       meters.
+BB2  - High resolution broadband diode with focal length of 2.7
+       meters.
+BB3  - High resolution broadband diode with focal length of 4.5
+       meters.
+BB4  - High resolution broadband diode with focal length of 13.3
+       meters.
+SUN  - Filter used for solar imaging.
+SUR  - Low resolution broadband diode.
+Nxx  - Internal calibration image, where xx is a two digit number.
+
+
+3.2.  File Formats
+
+3.2.1.  General
+
+3.2.1.1. Fixed Length Record Files
+
+     Records in a file with fixed length records are all the same
+length.  Fixed length records do not necessarily contain embedded
+information to indicate the beginning or end of a record.  The
+starting byte of any record can be calculated as follows:
+
+     offset = (record - 1) * length
+
+     where:    offset = byte offset from start of file
+               record = desired record number
+               length = length of record in bytes
+
+     Each image file on this volume is broken into logical
+records of fixed length.  Information pertaining to the size of
+the record is contained in the PDS label, which is discussed in
+Section 3.3.2.
+
+     Tables (.TAB files) are also fixed length files.
+
+
+3.2.1.2.  Text Files
+
+     Text files are stored as ASCII files in stream format.  A
+stream format file can have records of varying length.  The end
+of a record for a stream file on this volume is marked by
+carriage return <CR> and line feed <LF> characters to accommodate
+various operating systems.
+
+     Detached label files, catalog files, text files (.TXT), and
+HTML file (.HTM) on this volume are stored in stream format.
+Text files have an attached PDS label at the beginning of the
+file.
+
+
+3.2.1.3.  Data Format Descriptions
+
+     The reference data unit for image data is a binary byte.
+Each PDS format image on this volume contains several objects
+with different data types.  The PDS label is ASCII format, image
+data are 8-bit unsigned integers, and histograms are 32-bit
+integers with a most-significant-byte first format.
+
+
+3.3.  PDS Image File Format
+
+3.3.1.  Image File Structure
+
+     PDS format image files on this volume have a PDS ASCII text
+label at the beginning of the file.  The PDS label is followed by
+a histogram for the image, and then followed by the image data
+with one image line line per record.
+
+     The histogram records the number of pixels at each brightness
+level.  The PDS label and the histogram are padded with 0 valued
+bytes, if necessary, to maintain the fixed length record
+structure.  Each image is 512 pixels high.  The image width
+(hence the record size) varies from image to image.
+
+     Each section of the image file begins at a logical record
+boundary.  The image structure is illustrated below.
+
+              ______________________________
+             |           PDS Label          |
+             |------------------------------|
+             |               :              |
+             |------------------------------|
+             |  :  |        Padding         |
+             |------------------------------|
+             |           HISTOGRAM          |
+             |------------------------------|
+             |         :      |  Padding    |
+             |------------------------------|
+             |             Image            |
+             |------------------------------|
+             |          (512 lines)         |
+             |------------------------------|
+             |               :              |
+             |------------------------------|
+             |               :              |
+             |------------------------------|
+             |               :              |
+             |------------------------------|
+             |               :              |
+             |------------------------------|
+             |               :              |
+             |------------------------------|
+             |               :              |
+             |______________________________|
+
+             |<------- Width varies ------->|
+                from image to image
+
+
+3.3.2.  Image Label Structure
+
+     The PDS label conforms to the requirements of the PDS Data
+Preparation Workbook [6] and Planetary Science Data Dictionary
+Document [8].  The label describes the image and its format.  The
+label structure is keyword = value.  A label example is provided
+below.
+
+
+PDS_VERSION_ID                  = PDS3
+
+/* FILE FORMAT AND LENGTH */
+
+RECORD_TYPE                     = FIXED_LENGTH
+RECORD_BYTES                    = 564
+FILE_RECORDS                    = 518
+LABEL_RECORDS                   = 4
+
+/*      POINTERS TO START RECORDS OF OBJECTS IN FILE */
+^HISTOGRAM                      = 5
+^IMAGE                          = 7
+
+/* IMAGE DESCRIPTION */
+
+DATA_SET_ID                     = "VL1/VL2-M-LCS-2-EDR-V1.0"
+SPACECRAFT_NAME                 = VIKING_LANDER_1
+INSTRUMENT_NAME                 = CAMERA_2
+PRODUCT_ID                      = "12A006-BLU"
+MISSION_PHASE_NAME              = "PRIMARY MISSION"
+TARGET_NAME                     = "MARS"
+START_TIME                      = 1976-07-21T09:01:28Z
+STOP_TIME                       = 1976-07-21T09:07:29Z
+LOCAL_TIME                      = 12.36
+PLANET_DAY_NUMBER               = 1
+START_AZIMUTH                   =  80.0 <DEGREES>
+STOP_AZIMUTH                    = 147.5 <DEGREES>
+CENTER_ELEVATION                = -20.0 <DEGREES>
+OBSERVATION_TYPE                = "COLOR TRIPLET"
+FILTER_NAME                     = BLUE
+SAMPLING_PARAMETER_INTERVAL     = 0.12 <DEGREES>
+OFFSET_NUMBER                   = 1
+GAIN_NUMBER                     = 5
+DETECTOR_TEMPERATURE            = 11.1
+START_RESCAN_NUMBER             = 0
+TOTAL_RESCAN_NUMBER             = 0
+SCAN_RATE                       = 16000 <BPS>
+DATA_PATH_TYPE                  = "RECORDED UHF LINK"
+DUST_FLAG                       = TRUE
+MISSING_SAMPLES                 = 1
+NOTE                            = "FIRST LANDER 1 COLOR IMAGE"
+
+/* OBJECT DESCRIPTIONS */
+
+OBJECT                          = HISTOGRAM
+ ITEMS                          = 256
+ DATA_TYPE                      = MSB_INTEGER
+ ITEM_BYTES                     = 4
+END_OBJECT                      = HISTOGRAM
+
+OBJECT                          = IMAGE
+ LINES                          = 512
+ LINE_SAMPLES                   = 564
+ SAMPLE_TYPE                    = UNSIGNED_INTEGER
+ SAMPLE_BITS                    = 8
+ SAMPLE_BIT_MASK                = 2#11111100#
+ CHECKSUM                       = 15253232
+END_OBJECT                      = IMAGE
+
+END
+
+
+3.3.3.  Image Label Keyword Definitions
+
+     Definitions for keywords in the PDS image label are listed
+in this section.  These definitions are based on the standard PDS
+data dictionary definition, but are, in some cases, customized or
+expanded for the specific application to the Viking Lander
+images.
+
+     The Viking Lander cameras were facsimile scanning systems.
+They had a mirror that rotated around a horizontal axis to scan
+about 100 degrees in elevation.  They also rotated around a
+vertical axis to scan nearly 360 degrees of azimuth.  Note that a
+scan line refers a vertical line of data collected at a given
+camera azimuth.
+
+     There are several coordinate systems used for the elevation
+and azimuth coordinates of Viking Lander image data.  Azimuth and
+elevation values in the PDS labels are given in the Camera-
+Aligned Camera Coordinate System (CACCS) [2].  In this coordinate
+system, azimuths increase in the clockwise direction when viewed
+from above.  The 0 degree azimuth reference for a camera is
+toward the general direction of the other camera.  The 0 degree
+elevation reference is a plane perpendicular to the camera's
+azimuth rotation axis.  Elevation is negative below this plane
+and positive above.
+
+
+3.3.3.1.  FILE FORMAT AND LENGTH KEYWORDS
+
+PDS_VERSION_ID
+     The PDS_VERSION_ID element indicates the version number of
+the PDS standards that apply to a data product label.  The value
+for the Viking Lander image archive is PDS3, which indicates that
+version 3 of the PDS standards apply.
+
+RECORD_TYPE
+     The RECORD_TYPE element indicates the format of records in a
+file.  Viking Lander image files have fixed length records.
+
+RECORD_BYTES
+     The RECORD_BYTE element indicates the number of bytes in a
+record.
+
+FILE_RECORDS
+     The FILE_RECORDS element indicates the number of records,
+including PDS label records and data records.
+
+LABEL_RECORDS
+     The LABEL_RECORDS element indicates the number of file
+records that contain PDS label information.  The number of data
+records in a file is determined by subtracting the value of
+LABEL_RECORDS from the value of FILE_RECORDS.
+
+
+3.3.3.2. POINTERS TO START RECORDS OF OBJECTS IN FILE
+
+^HISTOGRAM
+     The ^HISTOGRAM keyword gives the starting logical record
+number of the histogram object.
+
+^IMAGE
+     The ^IMAGE keyword gives the starting logical record number
+of the image object.
+
+
+3.3.3.3. IMAGE DESCRIPTION KEYWORDS
+
+DATA_SET_ID
+     The DATA_SET_ID element is a unique alphanumeric identifier
+for a data set.  DATA_SET_ID is a combination of identifiers for
+the mission, target, instrument, data type, and version of the
+data set.  In most cases the DATA_SET_ID is an abbreviation of
+the DATA_SET_NAME.
+
+SPACECRAFT_NAME
+     The SPACECRAFT_NAME element provides the full name of a
+spacecraft.  Values for the Viking Landers are VIKING_LANDER_1
+and VIKING_LANDER_2.
+
+INSTRUMENT_NAME
+     The INSTRUMENT_NAME element provides the full name of an
+instrument.  Values for the Viking Lander cameras are CAMERA_1
+and CAMERA_2.
+
+PRODUCT_ID
+     The PRODUCT_ID element is a unique identifier assigned to a
+data product by the data product producer.  For Viking Lander
+images, PRODUCT_ID has the form LCXSSS-FFF, where L is the lander
+number, C is the camera number, X is a letter (starting with A
+for the first images and ending with J for Lander 1 and I for
+Lander 2), SSS is a sequence number from 000 to 255, and FFF is a
+code for the filter name.  Note that when the sequence number
+reaches 255, it was then reset to 000 and the letter was
+incremented.  An example PRODUCT_ID is 12A001-BB1 for the first
+image acquired by Viking Lander 1.
+
+MISSION_PHASE_NAME
+     The MISSION_PHASE_NAME is a commonly used identifier for a
+portion of time during a mission.  Examples are PRIMARY MISSION
+and EXTENDED MISSION.
+
+TARGET_NAME
+     The TARGET_NAME identifies a target.  The target may be a
+planet, satellite, ring, region, feature, asteroid, or comet.
+For the Viking Lander image data set, TARGET_NAME values include
+MARS, SUN, PHOBOS, DEIMOS, and N/A.  The N/A values are
+associated with calibration images.
+
+START_TIME
+     The START_TIME element provides the date and time in UTC of
+the beginning of an image.  Format is yyyy-mm-ddThh:mm:ssZ.
+
+STOP_TIME
+     The STOP_TIME element provides the date and time in UTC of
+the end of an image.  For Viking Lander images STOP_TIME may be
+approximate.  Format is yyyy-mm-ddThh:mm:ssZ.
+
+LOCAL_TIME
+     The LOCAL_TIME element provides the local time of day,
+measured in local hours from midnight.  A local hour is defined
+as one twenty-fourth of a local solar day.  A local hour for
+Mars, by this definition, is longer than an hour because a Mars
+solar day is greater than 24 hours.  Also, the value of
+LOCAL_TIME is given as a decimal number (NOT as hour and
+minutes).  For Viking Lander images LOCAL_TIME is the local time
+at the start of the image.
+
+PLANET_DAY_NUMBER
+     The PLANET_DAY_NUMBER element indicates the number of days
+elapsed since the landing day (landing day is zero).  This
+keyword is often referred to as sol number for the Viking
+Landers.
+
+START_AZIMUTH
+     The START_AZIMUTH is the azimuth at which an image starts.
+It is given in degrees in the camera-aligned camera coordinate
+system.
+
+STOP_AZIMUTH
+     The STOP_AZIMUTH is the azimuth at which an image stops.  It
+is given in degrees in the camera-aligned camera coordinate
+system.
+
+CENTER_ELEVATION
+     The CENTER_ELEVATION is the elevation at the center line of
+an image.  Depending on the SAMPLING_PARAMETER_INTERVAL value,
+the camera scanned either approximately 20 degrees or 60 degrees
+in elevation.
+
+OBSERVATION_TYPE
+     The OBSERVATION_TYPE element identifies the general type of
+an observation.  For Viking Lander images, some examples are HIGH
+RESOLUTION SINGLET, COLOR TRIPLET, and INFRARED TRIPLET.
+
+FILTER_NAME
+     The FILTER_NAME element provides the common name of the
+instrument filter used for a given image.  Values of FILTER_NAME
+for Viking Lander images include:  BB1, BB2, BB3, BB4, BLUE,
+GREEN, RED, IR1, IR2, IR3, SURVEY, and SUN.
+
+SAMPLING_PARAMETER_INTERVAL
+     The SAMPLING_PARAMETER_INTERVAL element identifies the
+spacing between data points.  In this case,
+SAMPLING_PARAMETER_INTERVAL is the spacing between pixels of an
+image.  Possible values for Viking Lander cameras are 0.04 and
+0.12 degrees in azimuth and elevation.
+
+OFFSET_NUMBER
+     The OFFSET_NUMBER indicates the offset value used in the
+analog to digital conversion.  The offset was a constant voltage
+added to the measured voltage signal before digitization.  Viking
+Lander cameras had 32 commandable offsets with equal voltage
+steps.
+
+GAIN_NUMBER
+     The GAIN_NUMBER indicates the gain value used in the analog
+to digital conversion.  The gain value was a multiplicative
+factor used in the analog to digital conversion.  There were 6
+commandable gains for the Viking Lander cameras.
+
+DETECTOR_TEMPERATURE
+     The DETECTOR_TEMPERATURE is the average detector temperature
+during the time of image acquisition.  Values are given in
+degrees Celsius.
+
+START_RESCAN_NUMBER
+     The START_RESCAN_NUMBER is the scan line number at which the
+rescan mode begins.  The rescan mode consists of scanning
+vertically repeatedly at the same azimuth.  A value of 0 for
+START_RESCAN_NUMBER means there was no rescan.
+
+TOTAL_RESCAN_NUMBER
+     The TOTAL_RESCAN_NUMBER is the total number of rescan lines
+acquired.
+
+SCAN_RATE
+     SCAN_RATE is the rate at which the instrument scanned while
+acquiring a data frame.  For Viking Lander images, the SCAN_RATE
+value is given in bits/second.
+
+DATA_PATH_TYPE
+     The DATA_PATH_TYPE element describes the telemetry path that
+data traversed from spacecraft to the ground.  Values for Viking
+Lander images are RECORDED UHF LINK, REALTIME UHF LINK, RECORDED
+S-BAND LINK, and REALTIME S-BAND LINK
+
+DUST_FLAG
+     The DUST_FLAG parameter indicates whether a dust sequence
+was executed in association with an image.  It is TRUE if a
+Viking Lander camera was commanded to discharge a stream of CO2
+gas across the protective outer window of the camera prior to
+acquiring an image.  It is FALSE otherwise.
+
+MISSING_SCAN_LINES
+     The MISSING_SCAN_LINES element is the total number of scan
+lines missing from an image when it was received on Earth.
+Missing scan lines are filled with zeros in the archive image
+file.
+
+NOTE
+     The NOTE element provides miscellaneous notes or comments
+about a data product.  The note in Viking Lander image labels
+indicates the reason for acquiring the image or describes the
+image content.
+
+
+3.3.3.4. HISTOGRAM OBJECT KEYWORDS
+
+ITEMS
+     The ITEMS element defines the number of multiple occurrences
+of a single object, such as a column.  In this case there are 256
+items in the image histogram.
+
+DATA_TYPE
+     The DATA_TYPE element supplies the internal representation
+and/or mathematical properties of a value being stored.  For
+example, MSB_INTEGER means an integer number stored in most
+significant byte first order.
+
+ITEM_BYTES
+     The ITEM_BYTES element gives the size in bytes of an item
+within a data object.
+
+
+3.3.3.5. IMAGE OBJECT KEYWORDS
+
+LINES
+     The LINES element is the total number of data instances
+along the vertical axis of an image.  For Viking Lander EDR
+images there are always 512 lines.
+
+LINE_SAMPLES
+     The LINE_SAMPLES element is the total number of data
+instances along the horizontal axis of an image.  The number of
+samples for Viking Lander images varies from image to image.
+
+SAMPLE_TYPE
+     The SAMPLE_TYPE element indicates the data storage
+representation of sample value.  For example, UNSIGNED_INTEGER is
+a positive integer number.
+
+SAMPLE_BITS
+     The SAMPLE_BITS element indicates the number of bits used to
+store one data sample value.  The value is always 8 for Viking
+Lander EDR images.
+
+SAMPLE_BIT_MASK
+     The SAMPLE_BIT_MASK element identifies the active bits in a
+sample.  The value 2#11111100# means that the original 6-bit data
+value was multiplied by 4 to generate the data value in the
+archive product.
+
+CHECKSUM
+     The CHECKSUM element is sum of all data values in a data
+object.
+
+
+4.  IMAGE ACCESS
+
+     PDS provides software for displaying PDS format images on a
+variety of computer platforms.  The application program for image
+display is called NASAView, which has versions for SUN,
+Macintosh, and PC platforms.  For some computer platforms, there
+is a NASAView version that will work as a Web browser helper
+application.
+
+     It is the intent of PDS to distribute NASAView through its
+Web and FTP sites.  Consult the PDS Web site
+(http://pds.jpl.nasa.gov/) for the status of NASAView in terms of
+its current capabilities and availability.
+
+
+5.  IMAGE BROWSER DESCRIPTION
+
+     The image browser system contained on this volume is a
+hypertext based system that provides a simple quick-look
+capability.  It consists of a series of HTML pages including one
+for each image.  The INDEX.HTM file in the BROWSE directory is
+the front page of the image browser.  The front page includes a
+brief description of the image browser.  Additional help on using
+the image browser can be found on the help page, which is
+accessible from most sections of the image browser.  Each image
+page displays a reduced size version of the PDS format image.
+The browse image has also been contrast enhanced.  Most of the
+PDS label is displayed with the browse image.
+
+     Browse images are stored in GIF format.  They can be
+displayed outside the image browser with any image display tool
+that can handle GIF images.
+
+     The image browser is for the most part compliant with HTML
+version 2.0.  However, it does use HTML tables, which may cause
+problems on some Web browsers.

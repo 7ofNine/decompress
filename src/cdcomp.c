@@ -63,6 +63,8 @@
 #include <string.h>
 #include <io.h>
 #include <fcntl.h>
+#include <share.h>
+#include <sys/stat.h>
 
 #define RECORD_BYTES        836
 
@@ -78,7 +80,7 @@ typedef struct leaf
  once the tree is created by the accompanying routine huff_tree.
 **************************************************************************/
 
-  NODE *tree;
+static NODE *tree = NULL;
 
 /* subroutine definitions                                           */
 
@@ -87,26 +89,44 @@ void               fits_labels();
 void               vicar_labels();
 void               no_labels();
 void               get_files();
-void               decompress();
+void               dcmprs(char*, char*, long int*, long int*, NODE*);
 void               decmpinit();
-void               free_tree();
+void               free_tree(long int *);
 int                read_var(char*);
 
 
-/* global variables                                                 */
+/* global variables     */
+
+#define NAME_SIZE 80
+#define BUFF_SIZE 2048
+
+#define FORMAT_UNDEFINED 0
+#define FORMAT_PDS 1
+#define FORMAT_FITS 2
+#define FORMAT_VICAR 3
+#define FORMAT_RAW 4
+
+#define ENCODING_SIZE 511 // Size of encoding histogram
+
+
 
 int                infile;
 FILE               *outfile;
-char               inname[80],outname[80];
+char               inname[NAME_SIZE];
+char               outname[NAME_SIZE];
 int                output_format;
+
+
 
 void main(int argc, char **argv)
 
 
 {
-char          ibuf[2048], obuf[2048];
+char          ibuf[BUFF_SIZE];
+char          obuf[BUFF_SIZE];
 short         length, total_bytes, line, i;
-long          long_length, hist[511];
+long          long_length;
+long          hist[ENCODING_SIZE] = { 0 };
 int           out_bytes = RECORD_BYTES;
 size_t        count;   
 
@@ -118,9 +138,9 @@ size_t        count;
 /*********************************************************************/
 
 
-   strcpy(inname,"   ");  
-   strcpy(outname,"   ");
-   output_format = 0;
+   strcpy_s(inname, NAME_SIZE, "   ");
+   strcpy_s(outname, NAME_SIZE, "   ");
+   output_format = FORMAT_UNDEFINED;
 
    if (argc == 1);                     /* prompt user for parameters */
    else if (argc == 2 && (strncmp(argv[1],"help",4) == 0 || 
@@ -141,10 +161,11 @@ size_t        count;
      }  
    else 
      {
-      strcpy(inname,argv[1]);  
-      if (argc >= 3) strcpy(outname,argv[2]); 
-      if (argc == 3) output_format = 1;
-      if (argc == 4) sscanf(argv[3],"%d",&output_format); 
+      strcpy_s(inname, NAME_SIZE,argv[1]);
+      if (argc >= 3) strcpy_s(outname, NAME_SIZE, argv[2]);
+      if (argc == 3) output_format = FORMAT_PDS;
+      int dummy = -1;
+      if (argc == 4) dummy = sscanf_s(argv[3], "%d", &output_format); 
      }
 
    get_files(); 
@@ -157,13 +178,13 @@ size_t        count;
 
    switch (output_format)
      {
-       case 1: pds_labels();
+       case FORMAT_PDS : pds_labels();
                break;
-       case 2: fits_labels();
+       case FORMAT_FITS : fits_labels();
                break;
-       case 3: vicar_labels();
+       case FORMAT_VICAR: vicar_labels();
                break;
-       case 4: no_labels();
+       case FORMAT_RAW: no_labels();
      }
 /*********************************************************************/
 /*                                                                   */
@@ -179,13 +200,13 @@ size_t        count;
    total_bytes = total_bytes + length;
 
   
-   if (output_format == 1)
+   if (output_format == FORMAT_PDS)
      {
       fwrite((char *)hist, RECORD_BYTES,1,outfile);
       fwrite((char *)hist + RECORD_BYTES,length,1,outfile);
 
       /*  pad out the histogram to a multiple of RECORD_BYTES */
-      for (i=total_bytes; i<RECORD_BYTES*2; i++) fputc(' ', outfile);
+      for (int i = total_bytes; i < RECORD_BYTES*2; i++) fputc(' ', outfile);
      }
 /*********************************************************************/
 /*                                                                   */
@@ -207,7 +228,7 @@ size_t        count;
    total_bytes = 0;
    length = read_var(ibuf);
 
-   if (output_format == 1)
+   if (output_format == FORMAT_PDS )
      {
       fwrite(ibuf,length,1,outfile);
       total_bytes = total_bytes + length;
@@ -238,7 +259,7 @@ size_t        count;
        if (length <= 0) break;
        long_length = (long)length;
        line += 1;
-       decompress(ibuf, obuf,&long_length, &out_bytes);
+       dcmprs(ibuf, obuf,&long_length, &out_bytes, tree);
        if (output_format == 1)
          {
           count = fwrite(obuf,RECORD_BYTES,1,outfile);
@@ -255,8 +276,8 @@ size_t        count;
       } while (length > 0 && line < 800);
 
  /*  pad out FITS file to a multiple of 2880 */
- if (output_format == 2)
-   for (i=0;i<2240;i++) fputc(' ', outfile);
+ if (output_format == FORMAT_FITS)
+   for (int i = 0; i < 2240; i++) fputc(' ', outfile);
 
  printf("\n");
  free_tree(&long_length);
@@ -280,14 +301,14 @@ void get_files()
      printf("\nEnter name of file to be decompressed: ");
      gets_s (inname, 79);
   }
-
-    if ((infile = _open(inname,_O_RDONLY | _O_BINARY)) <= 0){
+  _set_errno(0);
+    if (( _sopen_s(&infile,inname,_O_RDONLY | _O_BINARY, _SH_DENYWR, _S_IREAD)) != 0){
 
         printf("\ncan't open input file: %s\n",inname);
         exit(1);
     }
   
-  if (output_format == 0)
+  if (output_format == FORMAT_UNDEFINED)
   do
   {
      printf("\nEnter a number for the output format desired:\n");
@@ -298,7 +319,7 @@ void get_files()
      printf("\n  Enter format number:");
      gets_s(inname, 79);
      output_format = atoi(inname);
-  } while (output_format < 1 || output_format > 4);
+  } while (output_format < FORMAT_PDS || output_format > FORMAT_RAW);
 
   if (outname[0] == ' ')
   {
@@ -306,8 +327,8 @@ void get_files()
      gets_s (outname,79);
   }
 
- 
-  if ((outfile = fopen(outname,"wb"))==NULL){
+  _set_errno(0);
+  if (fopen_s(&outfile, outname,"wb") != 0){
 
        printf("\ncan't open output file: %s\n",outname);
        exit(1);
@@ -327,8 +348,11 @@ void get_files()
 void pds_labels()
 
 {
-char          outstring[80],ibuf[2048];
-short         length,total_bytes,i;
+char          outstring[NAME_SIZE];
+char          ibuf[BUFF_SIZE];
+short         length;
+short         total_bytes;
+short         i;
 
 
 total_bytes = 0;
@@ -346,9 +370,9 @@ do
    /* add the output file length to the sfdu label                  */
    /*****************************************************************/
      {
-      strcpy(outstring,ibuf);
-      strcpy(outstring+12,"00673796");
-      strcpy(outstring+20,ibuf+20);
+      strcpy_s(outstring, NAME_SIZE,ibuf);
+      strcpy_s(outstring+12, NAME_SIZE, "00673796");
+      strcpy_s(outstring+20, NAME_SIZE, ibuf+20);
       fwrite(outstring,length,1,outfile);
       fprintf(outfile,"\r\n");
       total_bytes = total_bytes + length + 2;
@@ -358,10 +382,10 @@ do
    /* change the record_type value from variable to fixed           */
    /*****************************************************************/
      {
-      strcpy(ibuf+35,"FIXED_LENGTH");
+      strcpy_s(ibuf + 35, BUFF_SIZE, "FIXED_LENGTH");
       length = length - 3;
-      fwrite(ibuf,length,1,outfile);
-      fprintf(outfile,"\r\n");
+      fwrite(ibuf, length, 1, outfile);
+      fprintf(outfile, "\r\n");
       total_bytes = total_bytes + length + 2;
      }
    else if ((i = strncmp(ibuf,"FILE_RECORDS",12)) == 0)
@@ -369,7 +393,7 @@ do
    /* change the file_records count to 806                          */
    /*****************************************************************/
      {
-      strcpy(ibuf+35,"806");
+      strcpy_s(ibuf+35, BUFF_SIZE, "806");
       fwrite(ibuf,length,1,outfile);
       fprintf(outfile,"\r\n");
       total_bytes = total_bytes + length + 2;
@@ -379,7 +403,7 @@ do
   /* change the label_records count from 56 to 3                    */
    /*****************************************************************/
      {
-      strcpy(ibuf+35,"3");
+      strcpy_s(ibuf+35, BUFF_SIZE, "3");
       length -= 1;
       fwrite(ibuf,length,1,outfile);
       fprintf(outfile,"\r\n");
@@ -390,7 +414,7 @@ do
    /* change the location pointer of image_histogram to record 4    */
    /*****************************************************************/
      {
-      strcpy(ibuf+35,"4");
+      strcpy_s(ibuf+35, BUFF_SIZE, "4");
       length -= 1;
       fwrite(ibuf,length,1,outfile);
       fprintf(outfile,"\r\n");
@@ -405,7 +429,7 @@ do
    /* change the location pointer of engineering_summary to record 6*/
    /*****************************************************************/
      {
-      strcpy(ibuf+35,"6");
+      strcpy_s(ibuf+35, BUFF_SIZE, "6");
       length -= 1;
       fwrite(ibuf,length,1,outfile);
       fprintf(outfile,"\r\n");
@@ -416,7 +440,7 @@ do
    /* change the location pointer of image to record 7              */
    /*****************************************************************/
      {
-      strcpy(ibuf+35,"7");
+      strcpy_s(ibuf+35, BUFF_SIZE, "7");
       length = length -1;
       fwrite(ibuf,length,1,outfile);
       fprintf(outfile,"\r\n");
@@ -463,8 +487,9 @@ do
 void fits_labels()
 
 {
-char          ibuf[2048],outstring[80];
-short         length,total_bytes,i;
+char        ibuf[BUFF_SIZE];
+char        outstring[NAME_SIZE];
+short       length,total_bytes,i;
 
 do
   {
@@ -477,44 +502,44 @@ do
 
 total_bytes = 0;
 
-strcpy(outstring,
+strcpy_s(outstring, NAME_SIZE, 
 "SIMPLE  =                    T                                                ");
 fwrite(outstring,78,1,outfile);
 fprintf(outfile,"\r\n");
 total_bytes = total_bytes + 80;
 
-strcpy(outstring,
+strcpy_s(outstring, NAME_SIZE, 
 "BITPIX  =                    8                                                ");
 fwrite(outstring,78,1,outfile);
 fprintf(outfile,"\r\n");
 total_bytes = total_bytes + 80;
 
-strcpy(outstring,
+strcpy_s(outstring, NAME_SIZE, 
 "NAXIS   =                    2                                                ");
 fwrite(outstring,78,1,outfile);
 fprintf(outfile,"\r\n");
 total_bytes = total_bytes + 80;
 
-strcpy(outstring,
+strcpy_s(outstring, NAME_SIZE, 
 "NAXIS1  =                  800                                                ");
 fwrite(outstring,78,1,outfile);
 fprintf(outfile,"\r\n");
 total_bytes = total_bytes + 80;
 
-strcpy(outstring,
+strcpy_s(outstring, NAME_SIZE, 
 "NAXIS2  =                  800                                                ");
 fwrite(outstring,78,1,outfile);
 fprintf(outfile,"\r\n");
 total_bytes = total_bytes + 80;
 
-strcpy(outstring,
+strcpy_s(outstring, NAME_SIZE, 
 "END                                                                           ");
 fwrite(outstring,78,1,outfile);
 fprintf(outfile,"\r\n");
 total_bytes = total_bytes + 80;
 
 /* pad out the labels with blanks to multiple of RECORD_BYTES */
-   for (i=total_bytes;i<2880;i++) fputc(' ', outfile);
+   for (int i = total_bytes; i < 2880; i++) fputc(' ', outfile);
 }
 
 /*********************************************************************/
@@ -525,7 +550,8 @@ total_bytes = total_bytes + 80;
 
 void vicar_labels()
 {
-char          ibuf[2048],outstring[80];
+char          ibuf[BUFF_SIZE];
+char          outstring[NAME_SIZE];
 short         length,total_bytes,i;
 
 do
@@ -539,22 +565,25 @@ do
 
 total_bytes = 0;
 
-strcpy(outstring,
+strcpy_s(outstring, NAME_SIZE, 
 "LBLSIZE=800             FORMAT='BYTE'  TYPE='IMAGE'  BUFSIZ=800  DIM=2  ");
 fwrite(outstring,72,1,outfile);
 total_bytes = total_bytes + 72;
-strcpy(outstring,
+
+strcpy_s(outstring, NAME_SIZE, 
 "EOL=0  RECSIZE=800  ORG='BSQ'  NL=800  NS=800  NB=1  N1=0  N2=0  N3=0  ");
 total_bytes = total_bytes + 71;
 fwrite(outstring,71,1,outfile);
-strcpy(outstring,
+
+strcpy_s(outstring, NAME_SIZE, 
 "N4=0  NBB=0  NLB=0");
 fwrite(outstring,18,1,outfile);
 fprintf(outfile,"\r\n");
 total_bytes = total_bytes + 20;
 
+
 /* pad out the labels with blanks to multiple of RECORD_BYTES */
-   for (i=total_bytes;i<800;i++) fputc(' ', outfile);
+   for (int i = total_bytes; i < 800; i++) fputc(' ', outfile);
 }
 
 /*********************************************************************/
@@ -566,7 +595,7 @@ total_bytes = total_bytes + 20;
 void no_labels()
 
 {
-char          ibuf[2048];
+char          ibuf[BUFF_SIZE];
 short         length,i;
 
 do
@@ -587,57 +616,21 @@ do
 /*                                                                   */
 /*********************************************************************/
 
-// TODO: Only support IBM PC in 64 bit mode
 read_var(char * ibuf)
 {
 int   length,result,nlen;
-//char  temp;
-//union /* this union is used to swap 16 and 32 bit integers          */
-//  {
-//   char  ichar[4];
-//   short slen;
-//   long  llen;
-//  } onion;
 
     length = 0;
     result = _read(infile,&length,2);
-    nlen =   _read(infile,ibuf,length+(length%2));
+    nlen =   _read(infile,ibuf,length + (length%2));
 
     return length;
 }
 
-
-
- void decompress(ibuf,obuf,nin,nout)
-/****************************************************************************
-*_TITLE decompress - decompresses image lines stored in compressed format   *
-*_ARGS  TYPE       NAME      I/O        DESCRIPTION                         */
-        char       *ibuf;  /* I         Compressed data buffer              */
-        char       *obuf;  /* O         Decompressed image line             */
-        long int   *nin;   /* I         Number of bytes on input buffer     */
-        long int   *nout;  /* I         Number of bytes in output buffer    */
-
-  {
- /* The external root pointer to tree */
-    extern NODE *tree;
-
- /* Declare functions called from this routine */
-    void dcmprs();
-
-/*************************************************************************
-  This routine is fairly simple as it's only function is to call the
-  routine dcmprs.
-**************************************************************************/
-
-    dcmprs(ibuf,obuf,nin,nout,tree);
-
-    return;
-  }
-
-void decmpinit(hist)
+static void decmpinit(long int *hist)
 /***************************************************************************
 *_TITLE decmpinit - initializes the Huffman tree                           *
-*_ARGS  TYPE       NAME      I/O        DESCRIPTION                        */
+*_ARGS  TYPE       NAME      I/O        DESCRIPTION                        *
         long int   *hist;  /* I         First-difference histogram.        */
 
 {
@@ -655,10 +648,10 @@ void decmpinit(hist)
   return;
  }
 
-NODE *huff_tree(hist)
+static NODE *huff_tree(long int *hist)
 /****************************************************************************
 *_TITLE huff_tree - constructs the Huffman tree; returns pointer to root    *
-*_ARGS  TYPE          NAME        I/O   DESCRIPTION                         */
+*_ARGS  TYPE          NAME        I/O   DESCRIPTION                         *
         long int     *hist;     /* I    First difference histogram          */
 
   {
@@ -666,18 +659,18 @@ NODE *huff_tree(hist)
     long int freq_list[512];      /* Histogram frequency list */
     NODE **node_list;             /* DN pointer array list */
 
-    register long int *fp;        /* Frequency list pointer */
-    register NODE **np;           /* Node list pointer */
+    long int *fp;        /* Frequency list pointer */
+    NODE **np;           /* Node list pointer */
 
-    register long int num_freq;   /* Number non-zero frequencies in histogram */
+    long int num_freq;   /* Number non-zero frequencies in histogram */
     //long int sum;                 /* Sum of all frequencies */
 
-    register short int num_nodes; /* Counter for DN initialization */
-    register short int cnt;       /* Miscellaneous counter */
+    short int num_nodes; /* Counter for DN initialization */
+    short int cnt;       /* Miscellaneous counter */
 
     short int znull = -1;         /* Null node value */
 
-    register NODE *temp;          /* Temporary node pointer */
+    NODE *temp;          /* Temporary node pointer */
 
   /* Functions called */
     void sort_freq();
@@ -686,13 +679,13 @@ NODE *huff_tree(hist)
 
 /***************************************************************************
   Allocate the array of nodes from memory and initialize these with numbers
-  corresponding with the frequency list.  There are only 511 possible
+  corresponding with the frequency list.  There are only ENCODING_SIZE (511) possible
   permutations of first difference histograms.  There are 512 allocated
   here to adhere to the FORTRAN version.
 ****************************************************************************/
 
    fp = freq_list;
-   node_list = (NODE **) malloc(sizeof(temp)*512);
+   node_list = (NODE **) malloc(sizeof(temp)*512);  // list of node pointers
    if (node_list == NULL)
     {
       printf("\nOut of memory in huff_tree!\n");
@@ -700,7 +693,7 @@ NODE *huff_tree(hist)
     }
    np = node_list;
 
-   for (num_nodes=1, cnt=512 ; cnt-- ; num_nodes++)
+   for (num_nodes = 1, cnt = 512 ; cnt-- ; num_nodes++)
      {
 /**************************************************************************
     The following code has been added to standardize the VAX byte order
@@ -710,7 +703,7 @@ NODE *huff_tree(hist)
         unsigned char *cp = (unsigned char *) hist++;
         unsigned long int j;
         short int i;
-        for (i=4 ; --i >= 0 ; j = (j << 8) | *(cp+i));
+        for (i = 4 ; --i >= 0 ; j = (j << 8) | *(cp + i));
 
 /* Now make the assignment */
         *fp++ = j;
@@ -725,12 +718,12 @@ NODE *huff_tree(hist)
 ****************************************************************************/
 
   num_freq = 512;
-  sort_freq(freq_list,node_list,num_freq);
+  sort_freq(freq_list, node_list, num_freq);
 
   fp = freq_list;
   np = node_list;
 
-  for (num_freq=512 ; (*fp) == 0 && (num_freq) ; fp++, np++, num_freq--);
+  for (num_freq = 512 ; (*fp) == 0 && (num_freq) ; fp++, np++, num_freq--);
 
 
 /***************************************************************************
@@ -742,7 +735,7 @@ NODE *huff_tree(hist)
   nodes and it's frequency is the sum of the two combining nodes.
 ****************************************************************************/
 
-  for (temp=(*np) ; (num_freq--) > 1 ; )
+  for (temp = (*np) ; (num_freq--) > 1 ; )
     {
         temp = new_node(znull);
         temp->right = (*np++);
@@ -788,26 +781,26 @@ NODE *new_node(value)
    return temp;
   }
 
- void sort_freq(freq_list,node_list,num_freq)
+ static void sort_freq(long int *freq_list, NODE **node_list, long int num_freq)
 /****************************************************************************
 *_TITLE sort_freq - sorts frequency and node lists in increasing freq. order*
-*_ARGS  TYPE       NAME            I/O  DESCRIPTION                         */
-        long int   *freq_list;   /* I   Pointer to frequency list           */
-        NODE       **node_list;  /* I   Pointer to array of node pointers   */
+*_ARGS  TYPE       NAME            I/O  DESCRIPTION                         *
+        long int   *freq_list;   /* I   Pointer to frequency list           *
+        NODE       **node_list;  /* I   Pointer to array of node pointers   *
         long int   num_freq;     /* I   Number of values in freq list       */
 
   {
     /* Local Variables */
-    register long int *i;       /* primary pointer into freq_list */
-    register long int *j;       /* secondary pointer into freq_list */
+    long int *i;       /* primary pointer into freq_list */
+    long int *j;       /* secondary pointer into freq_list */
 
-    register NODE **k;          /* primary pointer to node_list */
-    register NODE **l;          /* secondary pointer into node_list */
+    NODE **k;          /* primary pointer to node_list */
+    NODE **l;          /* secondary pointer into node_list */
 
     long int temp1;             /* temporary storage for freq_list */
     NODE *temp2;                /* temporary storage for node_list */
 
-    register long int cnt;      /* count of list elements */
+    long int cnt;      /* count of list elements */
 
 
 /************************************************************************
@@ -819,7 +812,7 @@ NODE *new_node(value)
 
    if (num_freq <= 0) return;      /* If no elements or invalid, return */
 
-   for (i=freq_list, k=node_list, cnt=num_freq ; --cnt ; *j=temp1, *l=temp2)
+   for (i = freq_list, k = node_list, cnt = num_freq ; --cnt ; *j=temp1, *l=temp2)
      {
         temp1 = *(++i);
         temp2 = *(++k);
@@ -837,23 +830,23 @@ NODE *new_node(value)
   return;
   }
 
- void dcmprs(ibuf,obuf,nin,nout,root)
+ static void dcmprs(char *ibuf, char *obuf, long int *nin, long int *nout, NODE *root)
 /****************************************************************************
 *_TITLE dcmprs - decompresses Huffman coded compressed image lines          *
-*_ARGS  TYPE       NAME       I/O       DESCRIPTION                         */
-        char       *ibuf;   /* I        Compressed data buffer              */
-        char       *obuf;   /* O        Decompressed image line             */
-        long int   *nin;    /* I        Number of bytes on input buffer     */
-        long int   *nout;   /* I        Number of bytes in output buffer    */
+*_ARGS  TYPE       NAME       I/O       DESCRIPTION                         *
+        char       *ibuf;   /* I        Compressed data buffer              *
+        char       *obuf;   /* O        Decompressed image line             *
+        long int   *nin;    /* I        Number of bytes on input buffer     *
+        long int   *nout;   /* I        Number of bytes in output buffer    *
         NODE       *root;   /* I        Huffman coded tree                  */
 
   {
     /* Local Variables */
-    register NODE *ptr = root;        /* pointer to position in tree */
-    register unsigned char test;      /* test byte for bit set */
-    register unsigned char idn;       /* input compressed byte */
+    NODE *ptr = root;        /* pointer to position in tree */
+    unsigned char test;      /* test byte for bit set */
+    unsigned char idn;       /* input compressed byte */
 
-    register char odn;                /* last dn value decompressed */
+    char odn;                /* last dn value decompressed */
 
     char *ilim = ibuf + *nin;         /* end of compressed bytes */
     char *olim = obuf + *nout;        /* end of output buffer */
@@ -877,7 +870,7 @@ NODE *new_node(value)
   go to right else go to left.
 ***************************************************************************/
 
-    for (idn=(*ibuf) ; ibuf < ilim  ; idn =(*++ibuf))
+    for (idn = (*ibuf) ; ibuf < ilim  ; idn =(*++ibuf))
      {
         for (test=0x80 ; test ; test >>= 1)
            {
@@ -896,10 +889,10 @@ NODE *new_node(value)
   }
 
 
-void free_tree(nfreed)
+static void free_tree(long int *nfreed)
 /****************************************************************************
 *_TITLE free_tree - free memory of all allocated nodes                      *
-*_ARGS  TYPE       NAME       I/O        DESCRIPTION                        */
+*_ARGS  TYPE       NAME       I/O        DESCRIPTION                        *
         long int   *nfreed;  /* O        Return of total count of nodes     *
 *                                        freed.                             */
 
@@ -927,17 +920,18 @@ void free_tree(nfreed)
   Simply call the free_node routine and return the result.
 *****************************************************************************/
 
-	*nfreed = free_node(tree,total_free);
+	*nfreed = free_node(tree, total_free);
 
 	return;
 }
 
-long int free_node(pnode,total_free)
+
+static long int free_node(NODE *pnode, long int total_free)
 /***************************************************************************
 *_TITLE free_node - deallocates an allocated NODE pointer
-*_ARGS  TYPE     NAME          I/O   DESCRIPTION                           */
-        NODE     *pnode;       /* I  Pointer to node to free               */
-        long int total_free;   /* I  Total number of freed nodes           */
+*_ARGS  TYPE     NAME          I/O   DESCRIPTION                           *
+        NODE     *pnode;       /* I  Pointer to node to free               *
+        long int total_free;   /* I  Total number of freed nodes           *
 
 /*
 *_DESCR  free_node will check both right and left pointers of a node       *
@@ -954,13 +948,13 @@ long int free_node(pnode,total_free)
 *        and is not done by any of these routines.                         *
 *_HIST   16-AUG-89  Kris Becker U.S.G.S  Flagstaff Original Version        */
 {
-	if (pnode == (NODE *) NULL) return(total_free);
+	if (pnode ==  NULL) return(total_free);
 	
-	if (pnode->right != (NODE *) NULL)
-		total_free = free_node(pnode->right,total_free);
-	if (pnode->left != (NODE *) NULL)
-		total_free = free_node(pnode->left,total_free);
+	if (pnode->right !=  NULL)
+		total_free = free_node(pnode->right, total_free);
+	if (pnode->left !=  NULL)
+		total_free = free_node(pnode->left, total_free);
 
-	free((char *) pnode);
+	free(pnode);
 	return(total_free + 1);
 }
