@@ -62,12 +62,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <io.h>
+#include <fcntl.h>
 
 #define RECORD_BYTES        836
-
-                                    /* pc i/o defines               */
-#define O_RDONLY         0x0000     /* open for reading only        */
-#define O_BINARY         0x8000     /* file mode is binary          */
 
 typedef struct leaf
   {
@@ -90,7 +87,6 @@ void               fits_labels();
 void               vicar_labels();
 void               no_labels();
 void               get_files();
-long               swap_long();
 void               decompress();
 void               decmpinit();
 void               free_tree();
@@ -104,18 +100,16 @@ FILE               *outfile;
 char               inname[80],outname[80];
 int                output_format;
 
-main(argc, argv)
+void main(int argc, char **argv)
 
-int  argc;
-char **argv;
 
 {
 char          ibuf[2048], obuf[2048];
-unsigned char blank=' ';
 short         length, total_bytes, line, i;
 long          long_length, hist[511];
 int           out_bytes = RECORD_BYTES;
-size_t        count;   // Changed from int
+size_t        count;   
+
 
 /*********************************************************************/
 /*                                                                   */
@@ -181,17 +175,17 @@ size_t        count;   // Changed from int
    total_bytes = 0;
    length = read_var((char *)hist);
    total_bytes = total_bytes + length;
-   length = read_var((char *)hist+836);
+   length = read_var((char *)hist + RECORD_BYTES);
    total_bytes = total_bytes + length;
 
   
    if (output_format == 1)
      {
-      fwrite((char *)hist,    836,1,outfile);
-      fwrite((char *)hist+836,length,1,outfile);
+      fwrite((char *)hist, RECORD_BYTES,1,outfile);
+      fwrite((char *)hist + RECORD_BYTES,length,1,outfile);
 
       /*  pad out the histogram to a multiple of RECORD_BYTES */
-      for (i=total_bytes;i<RECORD_BYTES*2;i++) fputc(blank,outfile);
+      for (i=total_bytes; i<RECORD_BYTES*2; i++) fputc(' ', outfile);
      }
 /*********************************************************************/
 /*                                                                   */
@@ -201,8 +195,8 @@ size_t        count;   // Changed from int
 /*********************************************************************/
 
    length = read_var((char *)hist);
-   length = read_var((char *)hist+836);
-   length = read_var((char *)hist+1672);
+   length = read_var((char *)hist + RECORD_BYTES);
+   length = read_var((char *)hist + 2* RECORD_BYTES);
 
 /*********************************************************************/
 /*                                                                   */
@@ -218,8 +212,8 @@ size_t        count;   // Changed from int
       fwrite(ibuf,length,1,outfile);
       total_bytes = total_bytes + length;
 
-      /*  pad out engineering to multiple of 836 */
-      for (i=total_bytes;i<RECORD_BYTES;i++) fputc(blank,outfile);
+      /*  pad out engineering to multiple of RECORD_BYTES (836) */
+      for (i=total_bytes; i<RECORD_BYTES; i++) fputc(' ', outfile);
      }
 /*********************************************************************/
 /*                                                                   */
@@ -262,7 +256,7 @@ size_t        count;   // Changed from int
 
  /*  pad out FITS file to a multiple of 2880 */
  if (output_format == 2)
-   for (i=0;i<2240;i++) fputc(blank,outfile);
+   for (i=0;i<2240;i++) fputc(' ', outfile);
 
  printf("\n");
  free_tree(&long_length);
@@ -287,7 +281,7 @@ void get_files()
      gets_s (inname, 79);
   }
 
-    if ((infile = _open(inname,O_RDONLY | O_BINARY)) <= 0){
+    if ((infile = _open(inname,_O_RDONLY | _O_BINARY)) <= 0){
 
         printf("\ncan't open input file: %s\n",inname);
         exit(1);
@@ -334,7 +328,6 @@ void pds_labels()
 
 {
 char          outstring[80],ibuf[2048];
-unsigned char cr=13,lf=10,blank=32;
 short         length,total_bytes,i;
 
 
@@ -357,7 +350,7 @@ do
       strcpy(outstring+12,"00673796");
       strcpy(outstring+20,ibuf+20);
       fwrite(outstring,length,1,outfile);
-      fprintf(outfile,"%c%c",cr,lf);
+      fprintf(outfile,"\r\n");
       total_bytes = total_bytes + length + 2;
      }
    else if ((i = strncmp(ibuf,"RECORD_TYPE",11)) == 0)
@@ -368,7 +361,7 @@ do
       strcpy(ibuf+35,"FIXED_LENGTH");
       length = length - 3;
       fwrite(ibuf,length,1,outfile);
-      fprintf(outfile,"%c%c",cr,lf);
+      fprintf(outfile,"\r\n");
       total_bytes = total_bytes + length + 2;
      }
    else if ((i = strncmp(ibuf,"FILE_RECORDS",12)) == 0)
@@ -378,7 +371,7 @@ do
      {
       strcpy(ibuf+35,"806");
       fwrite(ibuf,length,1,outfile);
-      fprintf(outfile,"%c%c",cr,lf);
+      fprintf(outfile,"\r\n");
       total_bytes = total_bytes + length + 2;
      }
    else if ((i = strncmp(ibuf,"LABEL_RECORDS",13)) == 0)
@@ -389,7 +382,7 @@ do
       strcpy(ibuf+35,"3");
       length -= 1;
       fwrite(ibuf,length,1,outfile);
-      fprintf(outfile,"%c%c",cr,lf);
+      fprintf(outfile,"\r\n");
       total_bytes = total_bytes + length + 2;
      }
    else if ((i = strncmp(ibuf,"^IMAGE_HISTOGRAM",16)) == 0)
@@ -400,7 +393,7 @@ do
       strcpy(ibuf+35,"4");
       length -= 1;
       fwrite(ibuf,length,1,outfile);
-      fprintf(outfile,"%c%c",cr,lf);
+      fprintf(outfile,"\r\n");
       total_bytes = total_bytes + length + 2;
      }
    else if ((i = strncmp(ibuf,"^ENCODING_HISTOGRAM)",19)) == 0);
@@ -415,7 +408,7 @@ do
       strcpy(ibuf+35,"6");
       length -= 1;
       fwrite(ibuf,length,1,outfile);
-      fprintf(outfile,"%c%c",cr,lf);
+      fprintf(outfile,"\r\n");
       total_bytes = total_bytes + length + 2;
      }
    else if ((i = strncmp(ibuf,"^IMAGE",6)) == 0)
@@ -426,7 +419,7 @@ do
       strcpy(ibuf+35,"7");
       length = length -1;
       fwrite(ibuf,length,1,outfile);
-      fprintf(outfile,"%c%c",cr,lf);
+      fprintf(outfile,"\r\n");
       total_bytes = total_bytes + length + 2;
      }
    else if ((i = strncmp(ibuf,
@@ -448,7 +441,7 @@ do
    else
      {
       fwrite(ibuf,length,1,outfile);
-      fprintf(outfile,"%c%c",cr,lf);
+      fprintf(outfile,"\r\n");
       total_bytes = total_bytes + length + 2;
      }
    /*****************************************************************/
@@ -458,7 +451,7 @@ do
   } while (length > 0);
 
 /* pad out the labels with blanks to multiple of RECORD_BYTES */
-   for (i=total_bytes;i<RECORD_BYTES*3;i++) fputc(blank,outfile);
+   for (i=total_bytes;i<RECORD_BYTES*3;i++) fputc(' ', outfile);
 }
 
 /*********************************************************************/
@@ -471,7 +464,6 @@ void fits_labels()
 
 {
 char          ibuf[2048],outstring[80];
-unsigned char cr=13,lf=10,blank=32;
 short         length,total_bytes,i;
 
 do
@@ -488,41 +480,41 @@ total_bytes = 0;
 strcpy(outstring,
 "SIMPLE  =                    T                                                ");
 fwrite(outstring,78,1,outfile);
-fprintf(outfile,"%c%c",cr,lf);
+fprintf(outfile,"\r\n");
 total_bytes = total_bytes + 80;
 
 strcpy(outstring,
 "BITPIX  =                    8                                                ");
 fwrite(outstring,78,1,outfile);
-fprintf(outfile,"%c%c",cr,lf);
+fprintf(outfile,"\r\n");
 total_bytes = total_bytes + 80;
 
 strcpy(outstring,
 "NAXIS   =                    2                                                ");
 fwrite(outstring,78,1,outfile);
-fprintf(outfile,"%c%c",cr,lf);
+fprintf(outfile,"\r\n");
 total_bytes = total_bytes + 80;
 
 strcpy(outstring,
 "NAXIS1  =                  800                                                ");
 fwrite(outstring,78,1,outfile);
-fprintf(outfile,"%c%c",cr,lf);
+fprintf(outfile,"\r\n");
 total_bytes = total_bytes + 80;
 
 strcpy(outstring,
 "NAXIS2  =                  800                                                ");
 fwrite(outstring,78,1,outfile);
-fprintf(outfile,"%c%c",cr,lf);
+fprintf(outfile,"\r\n");
 total_bytes = total_bytes + 80;
 
 strcpy(outstring,
 "END                                                                           ");
 fwrite(outstring,78,1,outfile);
-fprintf(outfile,"%c%c",cr,lf);
+fprintf(outfile,"\r\n");
 total_bytes = total_bytes + 80;
 
 /* pad out the labels with blanks to multiple of RECORD_BYTES */
-   for (i=total_bytes;i<2880;i++) fputc(blank,outfile);
+   for (i=total_bytes;i<2880;i++) fputc(' ', outfile);
 }
 
 /*********************************************************************/
@@ -534,7 +526,6 @@ total_bytes = total_bytes + 80;
 void vicar_labels()
 {
 char          ibuf[2048],outstring[80];
-unsigned char cr=13,lf=10,blank=32;
 short         length,total_bytes,i;
 
 do
@@ -559,11 +550,11 @@ fwrite(outstring,71,1,outfile);
 strcpy(outstring,
 "N4=0  NBB=0  NLB=0");
 fwrite(outstring,18,1,outfile);
-fprintf(outfile,"%c%c",cr,lf);
+fprintf(outfile,"\r\n");
 total_bytes = total_bytes + 20;
 
 /* pad out the labels with blanks to multiple of RECORD_BYTES */
-   for (i=total_bytes;i<800;i++) fputc(blank,outfile);
+   for (i=total_bytes;i<800;i++) fputc(' ', outfile);
 }
 
 /*********************************************************************/
@@ -576,7 +567,6 @@ void no_labels()
 
 {
 char          ibuf[2048];
-unsigned char cr=13,lf=10,blank=32;
 short         length,i;
 
 do
@@ -617,26 +607,6 @@ int   length,result,nlen;
 }
 
 
-long swap_long(long inval)  /* swap 4 byte integer                       */
-{
-union /* this union is used to swap 16 and 32 bit integers          */
-  {
-   char  ichar[4];
-   short slen;
-   long  llen;
-  } onion;
-  char   temp;
-
-  /* byte swap the input field                                      */
-  onion.llen   = inval;
-  temp   = onion.ichar[0];
-  onion.ichar[0]=onion.ichar[3];
-  onion.ichar[3]=temp;
-  temp   = onion.ichar[1];
-  onion.ichar[1]=onion.ichar[2];
-  onion.ichar[2]=temp;
-  return (onion.llen);
-}
 
  void decompress(ibuf,obuf,nin,nout)
 /****************************************************************************
